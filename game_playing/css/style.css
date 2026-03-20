@@ -1,0 +1,920 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+:root {
+    --bg-color: #0f0f1a;
+    --text-color: #fff;
+    --accent-color: #4a90e2;
+    --pixel-border: 4px solid #fff;
+    --ui-bg: rgba(0, 0, 0, 0.85);
+}
+
+* {
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #000;
+    color: var(--text-color);
+    font-family: 'Courier New', Courier, monospace; /* Fallback */
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* Pixel Art Font for headers/buttons if available, else monospace */
+h1, h2, h3, .pixel-btn {
+    font-family: 'Press Start 2P', cursive, monospace;
+    text-transform: uppercase;
+}
+
+#game-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    /* Pixel Art Space Background */
+    background-color: #0a0a12;
+    background-image: 
+        radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 3px),
+        radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 2px),
+        radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 3px);
+    background-size: 550px 550px, 350px 350px, 250px 250px;
+    background-position: 0 0, 40px 60px, 130px 270px;
+    box-shadow: none;
+    overflow: hidden;
+    image-rendering: pixelated;
+}
+
+/* Add stars via pseudo-element to keep them separate from gradient */
+#game-container::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* Animated Pixel Stars */
+    background-image: 
+        radial-gradient(2px 2px at 20px 30px, #eee, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 40px 70px, #fff, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 50px 160px, #ddd, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 90px 40px, #fff, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 130px 80px, #fff, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 160px 120px, #ddd, rgba(0,0,0,0));
+    background-repeat: repeat;
+    background-size: 200px 200px;
+    opacity: 0.8;
+    pointer-events: none;
+    animation: twinkle 4s infinite;
+}
+
+@keyframes twinkle {
+    0% { opacity: 0.5; transform: translateY(0); }
+    50% { opacity: 0.8; transform: translateY(-2px); }
+    100% { opacity: 0.5; transform: translateY(0); }
+}
+
+canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+    position: relative;
+    z-index: 1;
+}
+
+/* Screens */
+.screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column; /* Default to column for centering content vertically */
+    justify-content: center;
+    align-items: center;
+    background: transparent; /* Let canvas/body bg show through */
+    z-index: 10;
+    transition: opacity 0.3s;
+}
+
+#login-screen {
+    background: rgba(0, 0, 0, 0.1); /* Very transparent to show the bright background */
+}
+
+#battle-screen {
+    background: rgba(0, 0, 0, 0.8); /* Darker for battle */
+}
+
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Pixel Box UI */
+.pixel-box {
+    background: var(--ui-bg);
+    border: var(--pixel-border);
+    padding: 20px;
+    text-align: center;
+    max-width: 80%;
+    box-shadow: 5px 5px 0px #444;
+}
+
+.login-box {
+    width: 400px;
+}
+
+input[type="text"] {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    margin: 15px 0;
+    background: #222;
+    border: 2px solid #fff;
+    color: #fff;
+    font-family: inherit;
+    font-size: 1.2rem;
+    text-align: center;
+}
+
+.pixel-btn {
+    background: #333;
+    color: #fff;
+    border: 2px solid #fff;
+    padding: 15px 30px; /* Larger buttons */
+    cursor: pointer;
+    font-size: 1.2rem; /* Larger font */
+    margin: 5px;
+    transition: transform 0.1s;
+}
+
+.pixel-btn:active {
+    transform: scale(0.95);
+}
+
+.pixel-btn.secondary {
+    background: #555;
+    font-size: 1rem;
+}
+
+/* HUD */
+#hud {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    z-index: 5;
+}
+
+.status-bar {
+    display: flex;
+    justify-content: space-between;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 10px 15px;
+    border: 2px solid #fff;
+    font-size: 1.2rem; /* Larger HUD text */
+}
+
+.hp-bar {
+    width: 250px;
+    height: 25px;
+    background: #333;
+    border: 1px solid #fff;
+    display: inline-block;
+    vertical-align: middle;
+    margin: 0 10px;
+}
+
+#player-hp-fill {
+    height: 100%;
+    background: #e74c3c;
+    transition: width 0.3s;
+}
+
+/* Dialogue */
+#dialogue-box {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 95vw;
+    height: auto;
+    min-height: auto;
+    max-height: 50vh;
+    background: var(--ui-bg);
+    border: var(--pixel-border);
+    display: flex;
+    flex-direction: row;
+    z-index: 20;
+    overflow: hidden;
+}
+
+.portrait-container {
+    position: relative;
+    width: 120px;
+    min-width: 120px;
+    max-width: 25%;
+    border-right: 2px solid #fff;
+    background: #222;
+    flex-shrink: 0;
+}
+
+.pixel-portrait {
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+}
+
+.text-container {
+    flex: 1;
+    padding: 15px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    max-height: 100%;
+}
+
+#speaker-name {
+    margin: 0 0 8px 0;
+    color: #f1c40f;
+    font-size: clamp(0.9rem, 2vw, 1.5rem);
+    font-weight: bold;
+}
+
+#dialogue-text {
+    margin: 0 0 10px 0;
+    line-height: 1.5;
+    font-size: clamp(0.85rem, 1.8vw, 1.3rem);
+    flex-grow: 1;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+#next-dialogue-btn {
+    align-self: flex-end;
+    margin-top: 10px;
+    font-size: clamp(0.8rem, 1.5vw, 1.2rem);
+    padding: 8px 12px;
+}
+
+#dialogue-options {
+    margin-top: 10px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+}
+
+#dialogue-options .pixel-btn {
+    width: 100%;
+    text-align: left;
+    font-size: clamp(0.75rem, 1.5vw, 1rem);
+    height: 100%;
+    padding: 8px;
+}
+
+/* 小屏幕對話框優化 */
+@media (max-width: 480px) {
+    #dialogue-box {
+        width: 95%;
+        bottom: 10px;
+        max-height: 45vh;
+        flex-direction: column;
+    }
+    
+    .portrait-container {
+        width: 100%;
+        min-width: 100%;
+        height: 80px;
+        border-right: none;
+        border-bottom: 2px solid #fff;
+    }
+    
+    .text-container {
+        padding: 12px;
+    }
+    
+    #speaker-name {
+        font-size: 1rem;
+        margin: 0 0 5px 0;
+    }
+    
+    #dialogue-text {
+        font-size: 0.9rem;
+        margin: 0 0 8px 0;
+    }
+    
+    #next-dialogue-btn {
+        font-size: 0.85rem;
+    }
+    
+    #dialogue-options {
+        gap: 6px;
+        grid-template-columns: 1fr;
+    }
+}
+
+/* 平板豎屏優化 */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+    #dialogue-box {
+        width: 85%;
+        max-height: 45vh;
+    }
+    
+    .portrait-container {
+        width: 130px;
+    }
+    
+    .text-container {
+        padding: 18px;
+    }
+}
+
+/* 平板橫屏優化 */
+@media (min-width: 768px) and (orientation: landscape) {
+    #dialogue-box {
+        width: 80%;
+        max-height: 50vh;
+        bottom: 10px;
+    }
+    
+    .text-container {
+        padding: 15px;
+    }
+}
+
+/* 桌面版本 */
+@media (min-width: 1025px) {
+    #dialogue-box {
+        width: 800px;
+        max-width: 95vw;
+        max-height: 45vh;
+    }
+    
+    .portrait-container {
+        width: 140px;
+    }
+    
+    .text-container {
+        padding: 20px;
+    }
+    
+    #speaker-name {
+        font-size: 1.5rem;
+    }
+    
+    #dialogue-text {
+        font-size: 1.3rem;
+    }
+}
+
+#battle-answers {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Two columns for battle answers too */
+    gap: 10px;
+}
+
+#battle-answers .answer-btn {
+    width: 100%;
+    margin: 0; /* Reset margin for grid */
+}
+
+/* Battle */
+#battle-screen {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end; /* Push content to bottom */
+    align-items: center;
+    padding-bottom: 20px;
+}
+
+.monster-area {
+    text-align: center;
+    margin-bottom: auto; /* Push to top */
+    margin-top: 50px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.monster-hp-bar {
+    width: 400px;
+    height: 30px;
+    background: #333;
+    border: 2px solid #fff;
+    margin: 0 auto 20px;
+}
+
+#monster-hp-fill {
+    height: 100%;
+    background: #9b59b6;
+    transition: width 0.3s;
+}
+
+#monster-sprite {
+    width: 180px;
+    height: 180px;
+    background-color: red; /* Placeholder */
+    margin: 0 auto;
+    image-rendering: pixelated;
+}
+
+.battle-ui {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+#battle-question-box {
+    width: 95%; /* Match dialogue box width */
+    background: var(--ui-bg);
+    border: var(--pixel-border);
+    padding: 20px;
+    text-align: left;
+    min-height: 200px;
+}
+
+#battle-question-text {
+    font-size: 1.3rem; /* Larger font */
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.answer-btn {
+    display: block;
+    width: 100%;
+    margin: 10px 0;
+    text-align: left;
+    font-size: 1.2rem;
+    padding: 15px;
+}
+
+/* Mobile Controls - Virtual Joystick */
+#mobile-controls {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    width: auto;
+    height: auto;
+    pointer-events: none;
+    z-index: 30;
+    display: none; /* Hidden by default on desktop */
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    padding: 10px;
+    gap: 20px;
+}
+
+/* 手機直屏模式 (< 768px) */
+@media (max-width: 767px) and (orientation: portrait) {
+    #mobile-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        width: 100%;
+        height: auto;
+        bottom: 10px;
+        left: 0;
+        right: 0;
+        padding: 10px;
+        gap: 15px;
+    }
+    
+    .joystick-container {
+        flex-shrink: 0;
+        order: 0;
+    }
+    
+    .action-pad {
+        flex-shrink: 0;
+        order: 2;
+    }
+}
+
+/* 平板設備豎屏模式 (768px ~ 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+    #mobile-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        width: 100%;
+        height: auto;
+        bottom: 15px;
+        left: 0;
+        right: 0;
+        padding: 15px;
+        gap: 20px;
+    }
+    
+    .joystick-container {
+        width: 140px;
+        height: 140px;
+        flex-shrink: 0;
+        order: 0;
+    }
+    
+    .action-pad {
+        flex-shrink: 0;
+        order: 2;
+    }
+    
+    .a-btn {
+        width: 80px;
+        height: 80px;
+        font-size: 1.5rem;
+    }
+}
+
+/* 平板設備橫屏模式 (768px ~ 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
+    #mobile-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        width: 100%;
+        height: auto;
+        bottom: 10px;
+        left: 0;
+        right: 0;
+        padding: 10px;
+        gap: 15px;
+    }
+    
+    .joystick-container {
+        width: 120px;
+        height: 120px;
+        flex-shrink: 0;
+        order: 0;
+    }
+    
+    .action-pad {
+        flex-shrink: 0;
+        order: 2;
+    }
+    
+    .a-btn {
+        width: 70px;
+        height: 70px;
+        font-size: 1.2rem;
+    }
+}
+
+/* 手機橫屏模式 (< 768px) - 全面優化 */
+@media (max-width: 767px) and (orientation: landscape) {
+    body, #game-container {
+        font-size: 12px;
+    }
+    
+    #mobile-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        bottom: 8px;
+        left: 0;
+        right: 0;
+        width: 100%;
+        height: auto;
+        padding: 5px;
+        gap: 10px;
+    }
+    
+    .joystick-container {
+        width: 100px;
+        height: 100px;
+        flex-shrink: 0;
+        order: 0;
+    }
+    
+    .action-pad {
+        flex-shrink: 0;
+        order: 2;
+    }
+    
+    .pixel-box {
+        max-width: 95%;
+        padding: 12px;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+    
+    .login-box {
+        width: 90%;
+        padding: 15px;
+    }
+    
+    h1 {
+        font-size: 1.2rem;
+        margin: 5px 0;
+    }
+    
+    h2 {
+        font-size: 1rem;
+        margin: 5px 0;
+    }
+    
+    p {
+        font-size: 0.9rem;
+        margin: 5px 0;
+    }
+    
+    input[type="text"] {
+        font-size: 0.85rem;
+        padding: 6px;
+        margin: 5px 0;
+    }
+    
+    .pixel-btn {
+        font-size: 0.75rem;
+        padding: 8px 12px;
+        margin: 3px;
+    }
+    
+    /* 對話框橫屏優化 */
+    #dialogue-box {
+        width: 90%;
+        max-height: 40vh;
+        bottom: 5px;
+        padding: 0;
+    }
+    
+    .dialogue-container {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .portrait-container {
+        width: 70px;
+        min-width: 70px;
+        height: 80px;
+    }
+    
+    .text-container {
+        padding: 12px;
+        overflow-y: auto;
+    }
+    
+    #speaker-name {
+        font-size: 1rem;
+        margin: 0 0 5px 0;
+    }
+    
+    #dialogue-text {
+        font-size: 0.85rem;
+        line-height: 1.3;
+        margin: 0;
+    }
+    
+    #next-dialogue-btn {
+        font-size: 0.8rem;
+        padding: 5px 10px;
+        margin-top: 5px;
+    }
+    
+    #dialogue-options {
+        margin-top: 8px;
+        gap: 6px;
+    }
+    
+    #dialogue-options .pixel-btn {
+        font-size: 0.75rem;
+        padding: 6px;
+    }
+    
+    /* 戰鬥屏幕橫屏優化 */
+    #battle-screen {
+        padding-bottom: 10px;
+    }
+    
+    .monster-area {
+        margin-top: 20px;
+        margin-bottom: auto;
+    }
+    
+    #monster-sprite {
+        width: 120px;
+        height: 120px;
+    }
+    
+    .monster-hp-bar {
+        width: 300px;
+        height: 20px;
+    }
+    
+    #battle-question-box {
+        width: 85%;
+        padding: 12px;
+        min-height: 120px;
+        max-height: 35vh;
+        overflow-y: auto;
+    }
+    
+    #battle-question-text {
+        font-size: 0.9rem;
+        margin-bottom: 8px;
+        line-height: 1.3;
+    }
+    
+    #battle-answers {
+        gap: 6px;
+    }
+    
+    .answer-btn {
+        font-size: 0.75rem;
+        padding: 6px;
+        margin: 3px 0;
+    }
+    
+    .status-bar {
+        font-size: 0.75rem;
+        padding: 6px 8px;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    
+    .hp-bar {
+        width: 100px;
+        height: 14px;
+    }
+    
+    /* 結束屏幕優化 */
+    .result-box {
+        max-width: 95%;
+        padding: 12px;
+    }
+    
+    .result-box h1 {
+        font-size: 1.2rem;
+        margin: 8px 0;
+    }
+    
+    .stats {
+        font-size: 0.8rem;
+        line-height: 1.4;
+    }
+    
+    .stats p {
+        margin: 3px 0;
+    }
+    
+    /* 摇杆缩小 */
+    .joystick-container {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .joystick-stick {
+        width: 35px;
+        height: 35px;
+    }
+}
+
+.joystick-container {
+    pointer-events: auto;
+    width: 140px;
+    height: 140px;
+    flex-shrink: 0;
+}
+
+/* 橫屏時摇杆縮小 */
+.joystick-bg {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid #fff;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    touch-action: none;
+}
+
+.joystick-stick {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.6);
+    border: 2px solid #fff;
+    border-radius: 50%;
+    cursor: grab;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    transition: background 0.1s;
+}
+
+.joystick-stick:active {
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.action-pad {
+    pointer-events: auto;
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.a-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: rgba(231, 76, 60, 0.7);
+    border: 2px solid #fff;
+    color: #fff;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.1s;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    pointer-events: auto;
+}
+
+.a-btn:active {
+    background: rgba(231, 76, 60, 0.9);
+}
+
+/* 手機直屏模式下A按钮稍大 (< 768px) */
+@media (max-width: 767px) and (orientation: portrait) {
+    .a-btn {
+        width: 70px;
+        height: 70px;
+        font-size: 1.3rem;
+    }
+}
+
+/* 手機橫屏模式下A按钮縮小 (< 768px) */
+@media (max-width: 767px) and (orientation: landscape) {
+    .a-btn {
+        width: 50px;
+        height: 50px;
+        font-size: 0.9rem;
+    }
+}
+
+/* 平板設備豎屏A按钮尺寸 (768px ~ 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+    .a-btn {
+        width: 80px;
+        height: 80px;
+        font-size: 1.5rem;
+    }
+}
+
+/* 平板設備橫屏A按钮尺寸 (768px ~ 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
+    .a-btn {
+        width: 70px;
+        height: 70px;
+        font-size: 1.2rem;
+    }
+}
+
+/* Effects */
+.shake {
+    animation: shake 0.5s;
+}
+
+
+
+@keyframes shake {
+    0% { transform: translate(1px, 1px) rotate(0deg); }
+    10% { transform: translate(-1px, -2px) rotate(-1deg); }
+    20% { transform: translate(-3px, 0px) rotate(1deg); }
+    30% { transform: translate(3px, 2px) rotate(0deg); }
+    40% { transform: translate(1px, -1px) rotate(1deg); }
+    50% { transform: translate(-1px, 2px) rotate(-1deg); }
+    60% { transform: translate(-3px, 1px) rotate(0deg); }
+    70% { transform: translate(3px, 1px) rotate(-1deg); }
+    80% { transform: translate(-1px, -1px) rotate(1deg); }
+    90% { transform: translate(1px, 2px) rotate(0deg); }
+    100% { transform: translate(1px, -2px) rotate(-1deg); }
+}

@@ -1,0 +1,59 @@
+/* End Screen & Leaderboard */
+.result-box {
+    width: 800px; /* Wider box */
+    max-width: 95%;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.leaderboard-container {
+    max-height: 300px; /* Fixed height for scrolling */
+    overflow-y: auto; /* Enable vertical scrolling */
+    margin: 20px 0;
+    border: 2px solid #fff;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+/* Custom Scrollbar for Webkit */
+.leaderboard-container::-webkit-scrollbar {
+    width: 10px;
+}
+
+.leaderboard-container::-webkit-scrollbar-track {
+    background: #222;
+}
+
+.leaderboard-container::-webkit-scrollbar-thumb {
+    background: #fff;
+    border: 2px solid #222;
+}
+
+#leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #fff;
+    font-size: 1rem;
+}
+
+#leaderboard-table th, #leaderboard-table td {
+    padding: 12px;
+    text-align: center;
+    border-bottom: 1px solid #555;
+}
+
+#leaderboard-table th {
+    background-color: #333;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    border-bottom: 2px solid #fff;
+}
+
+#leaderboard-table tr:nth-child(even) {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+#leaderboard-table tr:hover {
+    background-color: rgba(74, 144, 226, 0.3); /* Highlight on hover */
+}

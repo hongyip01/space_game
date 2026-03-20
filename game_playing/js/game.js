@@ -427,7 +427,7 @@ class Game {
         }
     }
 
-    endGame(win) {
+    async endGame(win) {
         this.state = 'END';
         const timeSpent = Math.floor((Date.now() - this.startTime) / 1000) + "s";
         
@@ -439,17 +439,45 @@ class Game {
             fragments: this.player.fragments
         };
         
-        let leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
-        leaderboard.push(stats);
+        // Supabase 儲存
+        let leaderboard = [];
+        if (typeof supabase !== 'undefined') {
+            const { data: insertData, error: insertError } = await supabase
+                .from('space_game')
+                .insert([stats]);
+
+            if (insertError) {
+                console.warn('Supabase insert 失敗', insertError);
+            }
+
+            const { data: fetchData, error: fetchError } = await supabase
+                .from('space_game')
+                .select('*')
+                .order('fragments', { ascending: false })
+                .order('hp', { ascending: false })
+                .order('play_time', { ascending: true })
+                .limit(50);
+
+            if (fetchError) {
+                console.warn('Supabase fetch 失敗', fetchError);
+            } else {
+                leaderboard = fetchData;
+            }
+        }
         
         // Sort: Fragments DESC, HP DESC, Time ASC
-        leaderboard.sort((a, b) => {
-            if (b.fragments !== a.fragments) return b.fragments - a.fragments;
-            if (b.hp !== a.hp) return b.hp - a.hp;
-            return parseInt(a.time) - parseInt(b.time);
-        });
-        
-        localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+        if (leaderboard.length === 0) {
+            leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
+            leaderboard.push(stats);
+
+            leaderboard.sort((a, b) => {
+                if (b.fragments !== a.fragments) return b.fragments - a.fragments;
+                if (b.hp !== a.hp) return b.hp - a.hp;
+                return parseInt(a.time) - parseInt(b.time);
+            });
+
+            localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+        }
 
         document.getElementById('end-title').innerText = win ? "通關成功!" : "游戲結束";
         this.ui.showEndScreen(stats, leaderboard);

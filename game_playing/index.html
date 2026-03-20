@@ -135,5 +135,23 @@
     <script src="js/ui.js"></script>
     <script src="js/game.js"></script>
     <script src="js/main.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
+    <script>
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    </script>
+    <script>
+        async function submitScore(playerName, score) {
+    // Call the Cloudflare Function we created
+    const response = await fetch('/api/scores', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ player_name: playerName, score: score })
+    });
+    
+    const data = await response.json();
+    console.log("Score saved successfully!", data);
+  }
+ 
+    </script>
 </body>
 </html>

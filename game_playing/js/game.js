@@ -449,8 +449,13 @@ class Game {
             if (insertError) {
                 console.warn('Supabase insert 失敗', insertError);
             }
+            const client = window.supabaseClient;
 
-            const { data: fetchData, error: fetchError } = await supabase
+            if (client) {
+            const { error: insertError } = await client.from('space_game').insert([stats]);
+            if (insertError) console.warn('Supabase insert failed', insertError);
+
+            const { data: fetchData, error: fetchError } = await client
                 .from('space_game')
                 .select('*')
                 .order('fragments', { ascending: false })
@@ -459,10 +464,12 @@ class Game {
                 .limit(50);
 
             if (fetchError) {
-                console.warn('Supabase fetch 失敗', fetchError);
+                console.warn('Supabase fetch failed', fetchError);
             } else {
-                leaderboard = fetchData;
+                leaderboard = fetchData || [];
             }
+            }
+
         }
         
         // Sort: Fragments DESC, HP DESC, Time ASC

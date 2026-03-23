@@ -137,7 +137,7 @@
     <script src="js/main.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
     <script>
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     </script>
     <script>
         async function submitScore(playerName, score) {
@@ -151,7 +151,25 @@
     const data = await response.json();
     console.log("Score saved successfully!", data);
   }
- 
+  async function loadLeaderboard() {
+    try {
+      const response = await fetch('/api/scores');
+      const scores = await response.json();
+      
+      console.log("Leaderboard Data:", scores);
+      // 在這裡把 scores 顯示到你的 HTML 上
+      // 例如：
+      // scores.forEach(entry => {
+      //   console.log(`${entry.player_name}: ${entry.score}`);
+      // });
+    } catch (error) {
+      console.error("無法載入排行榜:", error);
+    }
+  }
+
+  // 當遊戲結束或網頁載入時呼叫
+  loadLeaderboard();
+</script>
     </script>
-</body>
-</html>
+    </body>
+    </html>

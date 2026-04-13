@@ -128,6 +128,11 @@
                 <button id="btn-interact" class="a-btn">A</button>
             </div>
         </div>
+
+        <!-- Background Music -->
+        <audio id="bgMusic" loop preload="auto">
+            <source src="assets/sounds/bg-music.mp3" type="audio/mpeg">
+        </audio>
     </div>
 
     <script src="js/data.js"></script>
@@ -142,36 +147,54 @@
         window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     </script>
     <script>
-        async function submitScore(playerName, score) {
-    // Call the Cloudflare Function we created
-    const response = await fetch('/api/scores', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ player_name: playerName, score: score })
-    });
-    
-    const data = await response.json();
-    console.log("Score saved successfully!", data);
-  }
-  async function loadLeaderboard() {
-    try {
-      const response = await fetch('/api/scores');
-      const scores = await response.json();
-      
-      console.log("Leaderboard Data:", scores);
-      // 在這裡把 scores 顯示到你的 HTML 上
-      // 例如：
-      // scores.forEach(entry => {
-      //   console.log(`${entry.player_name}: ${entry.score}`);
-      // });
-    } catch (error) {
-      console.error("無法載入排行榜:", error);
-    }
-  }
+        async function submitScore(stats) {
+            // Call the Cloudflare Function to save score securely
+            try {
+                const response = await fetch('/.netlify/functions/scores', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(stats)
+                });
 
-  // 當遊戲結束或網頁載入時呼叫
-  loadLeaderboard();
-</script>
+                if (!response.ok) {
+                    throw new Error('Failed to submit score');
+                }
+
+                const data = await response.json();
+                console.log("Score saved successfully!", data);
+                return data;
+            } catch (error) {
+                console.error("Error submitting score:", error);
+                throw error;
+            }
+        }
+
+        async function loadLeaderboard() {
+            try {
+                const client = window.supabaseClient;
+                if (!client) throw new Error('Supabase client not initialized');
+
+                const { data, error } = await client
+                    .from('space_game')
+                    .select('*')
+                    .order('fragments', { ascending: false })
+                    .order('hp', { ascending: false })
+                    .order('play_time', { ascending: true })
+                    .limit(50);
+
+                if (error) {
+                    console.warn('Error loading leaderboard from Supabase:', error);
+                    return JSON.parse(localStorage.getItem('leaderboard') || '[]');
+                }
+
+                return data || [];
+            } catch (error) {
+                console.error("Error loading leaderboard:", error);
+                return JSON.parse(localStorage.getItem('leaderboard') || '[]');
+            }
+        }
     </script>
     </body>
     </html>

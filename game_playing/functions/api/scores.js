@@ -7,10 +7,10 @@ export async function onRequestPost(context) {
   const requestData = await context.request.json();
   
   // (Optional) Add server-side validation here to prevent cheating!
-  // if (requestData.score > 9999) return new Response("Invalid score", { status: 400 });
+  // if (requestData.fragments > 4) return new Response("Invalid fragments", { status: 400 });
 
   // 3. Forward the request to Supabase securely from the server
-  const response = await fetch(`${SUPABASE_URL}/rest/v1/high_scores`, {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/space_game`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -18,8 +18,11 @@ export async function onRequestPost(context) {
       'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
     },
     body: JSON.stringify({
-      player_name: requestData.player_name,
-      score: requestData.score
+      id: requestData.id,
+      fragments: requestData.fragments,
+      hp: requestData.hp,
+      play_time: requestData.play_time,
+      created_at: new Date().toISOString()
     })
   });
 

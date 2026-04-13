@@ -312,6 +312,11 @@ class Game {
         const q = this.currentMonster.questions[qIdx];
         document.getElementById('battle-question-text').innerText = q.q;
         
+        // 播放提問音效
+        if (window.SOUND_EFFECTS) {
+            SOUND_EFFECTS.play('question');
+        }
+        
         const opts = q.options.map((opt, i) => ({
             text: opt,
             callback: () => this.handleBattleAnswer(i === q.correct)
@@ -429,50 +434,59 @@ class Game {
 
     async endGame(win) {
         this.state = 'END';
-        const timeSpent = Math.floor((Date.now() - this.startTime) / 1000) + "s";
+        const timeSpent = Math.floor((Date.now() - this.startTime) / 1000);
         
-        // Mock Leaderboard Save
+        // Leaderboard Save - 準備要送到 Supabase 的數據
         const stats = {
             id: this.player.id,
-            time: timeSpent,
+            fragments: this.player.fragments,
             hp: this.player.hp,
-            fragments: this.player.fragments
+            play_time: timeSpent,
+            created_at: new Date().toISOString()
         };
         
-        // Supabase 儲存
+        // 通過 Cloudflare Function 儲存到 Supabase
         let leaderboard = [];
-        if (typeof supabase !== 'undefined') {
-            const { data: insertData, error: insertError } = await supabase
-                .from('space_game')
-                .insert([stats]);
+        try {
+            // 呼叫 Cloudflare Function 來安全地提交scores
+            const response = await fetch('/.netlify/functions/scores', {
+                method: 'POST',
+                body: JSON.stringify(stats)
+            });
 
-            if (insertError) {
-                console.warn('Supabase insert 失敗', insertError);
+            if (!response.ok) {
+                console.warn('Cloudflare Function call failed:', response.statusText);
             }
-            const client = window.supabaseClient;
-
-            if (client) {
-            const { error: insertError } = await client.from('space_game').insert([stats]);
-            if (insertError) console.warn('Supabase insert failed', insertError);
-
-            const { data: fetchData, error: fetchError } = await client
-                .from('space_game')
-                .select('*')
-                .order('fragments', { ascending: false })
-                .order('hp', { ascending: false })
-                .order('play_time', { ascending: true })
-                .limit(50);
-
-            if (fetchError) {
-                console.warn('Supabase fetch failed', fetchError);
-            } else {
-                leaderboard = fetchData || [];
-            }
-            }
-
+        } catch (error) {
+            console.warn('Error calling Cloudflare Function:', error);
         }
         
-        // Sort: Fragments DESC, HP DESC, Time ASC
+        // 同時從 Supabase 讀取排行榜
+        const client = window.supabaseClient;
+        if (client) {
+            try {
+                const { data: fetchData, error: fetchError } = await client
+                    .from('space_game')
+                    .select('*')
+                    .order('fragments', { ascending: false })
+                    .order('hp', { ascending: false })
+                    .order('play_time', { ascending: true })
+                    .limit(50);
+
+                if (fetchError) {
+                    console.warn('Supabase fetch failed', fetchError);
+                    // 備降：讀取本地存儲
+                    leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
+                } else {
+                    leaderboard = fetchData || [];
+                }
+            } catch (error) {
+                console.error('Error fetching leaderboard:', error);
+                leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
+            }
+        }
+        
+        // 備降：本地存儲以防 Supabase 不可用
         if (leaderboard.length === 0) {
             leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
             leaderboard.push(stats);
@@ -480,7 +494,7 @@ class Game {
             leaderboard.sort((a, b) => {
                 if (b.fragments !== a.fragments) return b.fragments - a.fragments;
                 if (b.hp !== a.hp) return b.hp - a.hp;
-                return parseInt(a.time) - parseInt(b.time);
+                return (a.play_time || 0) - (b.play_time || 0);
             });
 
             localStorage.setItem('leaderboard', JSON.stringify(leaderboard));

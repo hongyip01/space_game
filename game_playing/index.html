@@ -150,7 +150,7 @@
         async function submitScore(stats) {
             // Call the Cloudflare Function to save score securely
             try {
-                const response = await fetch('/.netlify/functions/scores', {
+                const response = await fetch('https://spacegame.trainingctr.workers.dev/', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

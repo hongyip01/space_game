@@ -476,7 +476,9 @@ async endGame(win) {
     try {
         // 向 Cloudflare Worker 提交分數
         console.log('開始發送分數到 Worker...');
-        const response = await fetch('/api/scores', {
+        // API base URL – change to '/' (same origin) when deploying game and Worker on the same domain
+        const API_BASE = 'https://spacegame.trainingctr.workers.dev';
+        const response = await fetch(`${API_BASE}/api/scores`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

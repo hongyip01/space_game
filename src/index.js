@@ -46,23 +46,36 @@ export default {
       });
     }
 
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/space_game`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-      },
-      body: JSON.stringify({
-        id: requestData.id,
-        fragments: requestData.fragments,
-        hp: requestData.hp,
-        play_time: requestData.play_time,
-        created_at: new Date().toISOString(),
-      }),
-    });
+    let response;
+    try {
+      response = await fetch(`${SUPABASE_URL}/rest/v1/space_game`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          id: requestData.id,
+          fragments: requestData.fragments,
+          hp: requestData.hp,
+          play_time: requestData.play_time,
+          created_at: new Date().toISOString(),
+        }),
+      });
+    } catch (err) {
+      return new Response(
+        JSON.stringify({ error: 'Failed to reach Supabase.', detail: err.message }),
+        { status: 502, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } },
+      );
+    }
 
-    const result = await response.json();
+    let result;
+    try {
+      result = await response.json();
+    } catch {
+      result = {};
+    }
 
     return new Response(JSON.stringify(result), {
       status: response.status,

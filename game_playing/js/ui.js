@@ -127,7 +127,7 @@ class UI {
         
         // 優先使用傳入的 stats，若缺值則從 localStorage 回退（供 RPG Maker 傳值）
         const playerName = (stats && stats.id) ? stats.id : (localStorage.getItem('rpg_player_name') || '玩家');
-        const playTime = (stats && stats.time) ? stats.time : (localStorage.getItem('rpg_play_time') || '00:00');
+        const playTime = (stats && stats.play_time !== undefined) ? `${stats.play_time}s` : '00:00';
         const level = (stats && (stats.level !== undefined && stats.level !== null)) ? stats.level : (localStorage.getItem('rpg_player_level') || '—');
 
         document.getElementById('end-employee-id').innerText = playerName;
@@ -145,7 +145,7 @@ class UI {
                 <td>${entry.id}</td>
                 <td>${entry.fragments}</td>
                 <td>${entry.hp}</td>
-                <td>${entry.time}</td>
+                <td>${entry.play_time}s</td>
             `;
             tbody.appendChild(tr);
         });

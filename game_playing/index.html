@@ -135,66 +135,12 @@
         </audio>
     </div>
 
+    <!-- 遊戲腳本 -->
     <script src="js/data.js"></script>
     <script src="js/input.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/game.js"></script>
     <script src="js/main.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
-    <script>
-        const SUPABASE_URL = "https://rpnmyvzfyaelxlsoyzux.supabase.co";
-        const SUPABASE_KEY = "sb_publishable_7BRo0Hhfqbxx4zOrDmLuzw_AvwOHRvd";
-        window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    </script>
-    <script>
-        async function submitScore(stats) {
-            // Call the Cloudflare Function to save score securely
-            try {
-                const response = await fetch('https://spacegame.trainingctr.workers.dev/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(stats)
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to submit score');
-                }
-
-                const data = await response.json();
-                console.log("Score saved successfully!", data);
-                return data;
-            } catch (error) {
-                console.error("Error submitting score:", error);
-                throw error;
-            }
-        }
-
-        async function loadLeaderboard() {
-            try {
-                const client = window.supabaseClient;
-                if (!client) throw new Error('Supabase client not initialized');
-
-                const { data, error } = await client
-                    .from('space_game')
-                    .select('*')
-                    .order('fragments', { ascending: false })
-                    .order('hp', { ascending: false })
-                    .order('play_time', { ascending: true })
-                    .limit(50);
-
-                if (error) {
-                    console.warn('Error loading leaderboard from Supabase:', error);
-                    return JSON.parse(localStorage.getItem('leaderboard') || '[]');
-                }
-
-                return data || [];
-            } catch (error) {
-                console.error("Error loading leaderboard:", error);
-                return JSON.parse(localStorage.getItem('leaderboard') || '[]');
-            }
-        }
-    </script>
+  
     </body>
     </html>

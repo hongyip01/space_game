@@ -17,7 +17,7 @@ class InputHandler {
 
     initKeyboard() {
         window.addEventListener('keydown', (e) => {
-            switch(e.key.toLowerCase()) {
+            switch((e.key || '').toLowerCase()) {
                 case 'w': case 'arrowup': this.keys.up = true; break;
                 case 's': case 'arrowdown': this.keys.down = true; break;
                 case 'a': case 'arrowleft': this.keys.left = true; break;
@@ -30,7 +30,7 @@ class InputHandler {
         });
 
         window.addEventListener('keyup', (e) => {
-            switch(e.key.toLowerCase()) {
+            switch((e.key || '').toLowerCase()) {
                 case 'w': case 'arrowup': this.keys.up = false; break;
                 case 's': case 'arrowdown': this.keys.down = false; break;
                 case 'a': case 'arrowleft': this.keys.left = false; break;

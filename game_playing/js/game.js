@@ -275,6 +275,13 @@ class Game {
             callback: () => {
                 this.ui.hideDialogue();
                 this.state = 'MAP';
+                
+                // 啟動第一個 NPC 以供交互
+                if (this.monsterIndex < this.npcs.length) {
+                    this.npcs[this.monsterIndex].status = 'ACTIVE';
+                    console.log('✅ 啟動第一個 NPC:', this.npcs[this.monsterIndex].name);
+                }
+                
                 this.ui.updateHUD();
                 this.updateMobileControlsVisibility();
             }
@@ -282,17 +289,21 @@ class Game {
     }
 
     startBattle(monsterIdx) {
+        console.log('🔴 開始戰鬥 - 怪物索引:', monsterIdx);
         this.state = 'BATTLE';
         this.currentMonster = JSON.parse(JSON.stringify(GAME_DATA.monsters[monsterIdx])); // Deep copy
         this.currentMonster.qIndex = 0;
+        console.log('怪物對象:', this.currentMonster);
         this.ui.showBattle(this.currentMonster);
         this.battleSequence();
     }
 
     battleSequence() {
+        console.log('⚔️ battleSequence - qIndex:', this.currentMonster.qIndex);
         const m = this.currentMonster;
         // Show dialogue first
         if (m.qIndex === 0) {
+             console.log('展示怪物對白:', m.dialogue[0]);
              document.getElementById('battle-question-text').innerText = m.dialogue[0];
              this.renderBattleOptions([{text: "來吧！", callback: () => {
                  m.qIndex = 0.5; // Flag to start Q1
@@ -302,14 +313,18 @@ class Game {
         }
 
         if (m.qIndex === 0.5) {
+            console.log('詢問第一題');
             this.askBattleQuestion(0);
         } else if (m.qIndex === 1.5) {
+            console.log('詢問第二題');
             this.askBattleQuestion(1);
         }
     }
 
     askBattleQuestion(qIdx) {
+        console.log('📝 askBattleQuestion - qIdx:', qIdx);
         const q = this.currentMonster.questions[qIdx];
+        console.log('問題:', q);
         document.getElementById('battle-question-text').innerText = q.q;
         
         // 播放提問音效
@@ -319,7 +334,10 @@ class Game {
         
         const opts = q.options.map((opt, i) => ({
             text: opt,
-            callback: () => this.handleBattleAnswer(i === q.correct)
+            callback: () => {
+                console.log('選中選項', i, '正確答案是', q.correct);
+                this.handleBattleAnswer(i === q.correct);
+            }
         }));
         this.renderBattleOptions(opts);
     }
@@ -342,13 +360,16 @@ class Game {
     }
 
     handleBattleAnswer(isCorrect) {
+        console.log('✅ handleBattleAnswer - isCorrect:', isCorrect);
         // Handle HP deduction immediately for wrong answers
         if (!isCorrect) {
+            console.log('❌ 答錯，扣血 4000');
             this.player.hp -= 4000;
             this.triggerEffect('shake');
             this.ui.updateHUD();
             
             if (this.player.hp <= 0) {
+                console.log('💀 角色死了，遊戲結束');
                 this.endGame(false);
                 return;
             }
@@ -409,7 +430,9 @@ class Game {
     }
 
     winBattle() {
+        console.log('🎉 winBattle - 戰鬥勝利');
         this.player.fragments++;
+        console.log('💎 收集碎片:', this.player.fragments, '/4');
         this.ui.updateHUD();
         this.ui.hideDialogue(); // Hide the win message
         
@@ -422,6 +445,7 @@ class Game {
         }
 
         if (this.player.fragments >= 4) {
+            console.log('🏆 收集到4個碎片，遊戲結束！');
             this.endGame(true);
         } else {
             this.state = 'MAP';
@@ -431,78 +455,69 @@ class Game {
             this.updateMobileControlsVisibility();
         }
     }
-
-    async endGame(win) {
-        this.state = 'END';
-        const timeSpent = Math.floor((Date.now() - this.startTime) / 1000);
+//
+async endGame(win) {
+    this.state = 'END';
+    const timeSpent = Math.floor((Date.now() - this.startTime) / 1000);
+    
+    // 準備數據
+    const stats = {
+        id: this.player.id,
+        fragments: this.player.fragments,
+        hp: this.player.hp,
+        play_time: timeSpent
+    };
+    
+    console.log('=== 遊戲結束 ===');
+    console.log('準備發送的 stats:', stats);
+    
+    let leaderboard = [];
+    
+    try {
+        // 向 Cloudflare Worker 提交分數
+        console.log('開始發送分數到 Worker...');
+        const response = await fetch('/api/scores', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(stats)
+        });
         
-        // Leaderboard Save - 準備要送到 Supabase 的數據
-        const stats = {
-            id: this.player.id,
-            fragments: this.player.fragments,
-            hp: this.player.hp,
-            play_time: timeSpent,
-            created_at: new Date().toISOString()
-        };
+        console.log('Worker 響應狀態:', response.status);
         
-        // 通過 Cloudflare Function 儲存到 Supabase
-        let leaderboard = [];
-        try {
-            // 呼叫 Cloudflare Function 來安全地提交scores
-            const response = await fetch('/.netlify/functions/scores', {
-                method: 'POST',
-                body: JSON.stringify(stats)
-            });
-
-            if (!response.ok) {
-                console.warn('Cloudflare Function call failed:', response.statusText);
-            }
-        } catch (error) {
-            console.warn('Error calling Cloudflare Function:', error);
-        }
-        
-        // 同時從 Supabase 讀取排行榜
-        const client = window.supabaseClient;
-        if (client) {
-            try {
-                const { data: fetchData, error: fetchError } = await client
-                    .from('space_game')
-                    .select('*')
-                    .order('fragments', { ascending: false })
-                    .order('hp', { ascending: false })
-                    .order('play_time', { ascending: true })
-                    .limit(50);
-
-                if (fetchError) {
-                    console.warn('Supabase fetch failed', fetchError);
-                    // 備降：讀取本地存儲
-                    leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
-                } else {
-                    leaderboard = fetchData || [];
-                }
-            } catch (error) {
-                console.error('Error fetching leaderboard:', error);
-                leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
-            }
-        }
-        
-        // 備降：本地存儲以防 Supabase 不可用
-        if (leaderboard.length === 0) {
+        if (response.ok) {
+            const result = await response.json();
+            console.log('✅ 分數成功提交');
+            leaderboard = result.leaderboard || [];
+        } else {
+            console.warn('⚠️ Worker 返回非 200 狀態:', response.status);
             leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
-            leaderboard.push(stats);
-
-            leaderboard.sort((a, b) => {
-                if (b.fragments !== a.fragments) return b.fragments - a.fragments;
-                if (b.hp !== a.hp) return b.hp - a.hp;
-                return (a.play_time || 0) - (b.play_time || 0);
-            });
-
-            localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
         }
-
-        document.getElementById('end-title').innerText = win ? "通關成功!" : "游戲結束";
-        this.ui.showEndScreen(stats, leaderboard);
+    } catch (error) {
+        console.error('❌ 提交分數失敗:', error);
+        leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
     }
+    
+    // 本地備降
+    if (leaderboard.length === 0) {
+        console.log('使用本地存儲備降...');
+        leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
+        leaderboard.push(stats);
+
+        leaderboard.sort((a, b) => {
+            if (b.fragments !== a.fragments) return b.fragments - a.fragments;
+            if (b.hp !== a.hp) return b.hp - a.hp;
+            return (a.play_time || 0) - (b.play_time || 0);
+        });
+
+        localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+        console.log('✅ 數據已存儲到本地');
+    }
+
+    document.getElementById('end-title').innerText = win ? "通關成功!" : "游戲結束";
+    this.ui.showEndScreen(stats, leaderboard);
+}
 
     update() {
         // Update mobile controls visibility based on current state

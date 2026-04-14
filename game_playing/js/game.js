@@ -460,44 +460,35 @@ async endGame(win) {
     this.state = 'END';
     const timeSpent = Math.floor((Date.now() - this.startTime) / 1000);
     
-    // 準備數據
+    // prepare data to send to server
     const stats = {
         id: this.player.id,
         fragments: this.player.fragments,
         hp: this.player.hp,
         play_time: timeSpent
     };
-    
+    try {
+       const response = await fetch('/score', { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(stats)
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            console.log('提交成功:');
+            // 這裡可以接續處理排行榜顯示邏輯
+            this.ui.showEndScreen(stats, result.leaderboard || []);
+        }
+    } catch (error) {
+        console.error('提交失敗:', error);
+        this.ui.showEndScreen(stats, []);
+    }
+
     console.log('=== 遊戲結束 ===');
     console.log('準備發送的 stats:', stats);
     
     let leaderboard = [];
-    
-    try {
-        // 向 Cloudflare Worker 提交分數
-        console.log('開始發送分數到 Worker...');
-        const response = await fetch('/api/scores', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(stats)
-        });
-        
-        console.log('Worker 響應狀態:', response.status);
-        
-        if (response.ok) {
-            const result = await response.json();
-            console.log('✅ 分數成功提交');
-            leaderboard = result.leaderboard || [];
-        } else {
-            console.warn('⚠️ Worker 返回非 200 狀態:', response.status);
-            leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
-        }
-    } catch (error) {
-        console.error('❌ 提交分數失敗:', error);
-        leaderboard = JSON.parse(localStorage.getItem('leaderboard') || '[]');
-    }
     
     // 本地備降
     if (leaderboard.length === 0) {

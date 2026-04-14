@@ -20,7 +20,7 @@ export async function onRequestPost(context) {
         };
 
         // 轉發給 Supabase，請確保後台已設定 SUPABASE_URL 和 SUPABASE_KEY
-        const res = await fetch(`${env.SUPABASE_URL}/rest/v1/spacegame`, {
+        const res = await fetch(`${env.SUPABASE_URL}/rest/v1/space_game`, {
             method: 'POST',
             headers: {
                 'apikey': env.SUPABASE_KEY,
